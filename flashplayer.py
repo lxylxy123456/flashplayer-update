@@ -74,8 +74,9 @@ def install(so_name=SO_FNAME, install_path=INSTALL_PATH) :
 	install_name = os.path.join(install_path, SO_NAME)
 	if os.path.exists(install_name) :
 		target = datetime.now().strftime('backup-%Y%m%d%H%M%S.so')
-		assert not os.path.exists(os.path.join(TMP_NAME, target))
-		shutil.move(install_name, target)
+		full_target = os.path.join(TMP_NAME, target)
+		assert not os.path.exists(full_target)
+		shutil.move(install_name, full_target)
 	assert not os.path.exists(install_name)
 	shutil.move(so_name, install_name)
 	os.chmod(install_name, 0o755)
