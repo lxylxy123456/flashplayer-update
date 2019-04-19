@@ -38,6 +38,8 @@ SO_NAME = 'libflashplayer.so'
 SO_FNAME = os.path.join(TMP_NAME, SO_NAME)
 INSTALL_PATH = '/usr/lib64/mozilla/plugins/'
 INSTALL_NAME = os.path.join(INSTALL_PATH, SO_NAME)
+VER_NAME = 'libflashplayer.so.version'
+VER_FNAME = os.path.join(INSTALL_PATH, VER_NAME)
 
 def get_download_page_1() :
 	resp = requests.get(PROTO + HOST + MASTER_URL, headers=HEADERS)
@@ -50,7 +52,10 @@ def get_download_page_1() :
 	case_code = resp.text.split('case "3":', 1)[1].split('case "4":')[0]
 	assert case_code.count('$("#buttonDownload").attr("href","') == 1
 	exp = '\$\("#buttonDownload"\).attr\("href","(.+)"\);'
-	return re.search(exp, case_code).groups()[0]
+	href = re.search(exp, case_code).groups()[0]
+	exp2 = '<strong>版本 ([\d\.]+)</strong>'
+	version = re.search(exp2, resp.text).groups()[0]
+	return href, version
 
 def get_download_page_2(link) :
 	assert link.startswith('/cn/flashplayer/download/')
@@ -82,12 +87,26 @@ def install(so_name=SO_FNAME, install_path=INSTALL_PATH) :
 	os.chmod(install_name, 0o755)
 	return install_name
 
+def get_version() :
+	if os.path.exists(VER_FNAME) :
+		return open(VER_FNAME).read().strip()
+
+def set_version(version) :
+	open(VER_FNAME, 'w').write(version)
+
 def main() :
-	link = get_download_page_1()
+	link, version = get_download_page_1()
+	if version == get_version() :
+		print('Installed version is latest')
+		return
 	link2 = get_download_page_2(link)
 	tar_name = download(link2)
 	so_name = extract(tar_name)
+	set_version('0.0.0.0')
 	install_name = install(so_name)
+	print('Installed')
+	set_version(version)
+	print('Updated version record')
 
 if __name__ == '__main__' :
 	main()
